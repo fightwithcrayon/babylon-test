@@ -1,47 +1,103 @@
-import * as cannon from 'cannon';
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 
-export const createSphere = (scene) => {
-  var sphere = BABYLON.MeshBuilder.CreateSphere('sphere', {segments:16, diameter:2}, scene);
-  sphere.physicsImpostor = new BABYLON.PhysicsImpostor(sphere, BABYLON.PhysicsImpostor.SphereImpostor, { mass: 1, restitution: 0.9 }, scene);
-  sphere.position.y = 20;
-  return sphere;
+export const addCharacter = (scene, callback) => {
+  const loader = new GLTFLoader();
+  loader.load('/assets//aaaa.hrc.gltf', function (gltf) {
+    const {
+      scene: model,
+      animations,
+     } = gltf;
+    scene.add(model);
+    //model.position.z = -80;
+    //model.rotation.x = -6;
+    //model.rotation.y = -3;
+    //model.rotation.z = 0;
+    console.log(animations);
+    if (animations && animations.length > 0) {
+      clock = new THREE.Clock();
+      const animationMixer = new THREE.AnimationMixer(model);
+      animationMixer.clipAction(animations[currentAnimationId]).play();
+      animate();
+    }
+    callback({
+      animations,
+      model,
+    });
+  }, undefined, function (error) {
+    console.error('Error while loading glTF:', error);
+  });
 }
 
-export const createCamera = (scene) => {
-  var camera = new BABYLON.FollowCamera('camera', new BABYLON.Vector3(0, 5,-10), scene);
-  camera.radius = 20;
-  camera.heightOffset = 10;
-  camera.inputs.clear();
-  return camera;
+export const setupScene = () => {
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+  const light = new THREE.DirectionalLight(0xffffff);
+  const ambientLight = new THREE.AmbientLight(0x404040);
+  light.position.set(1, 1, 1).normalize();
+  scene.add(camera);
+  scene.add(light);
+  scene.add(ambientLight);
+  var renderer = new THREE.WebGLRenderer({
+    alpha: true,
+  });
+  renderer.setSize( window.innerWidth, window.innerHeight );
+
+  camera.translateZ(100);
+  camera.translateY(50);
+  document.body.appendChild( renderer.domElement );
+
+  return {
+    camera,
+    renderer,
+    scene,
+  }
 }
 
-export const createScene = (engine) => {
-  var scene = new BABYLON.Scene(engine);
-  var light = new BABYLON.HemisphericLight('light1', new BABYLON.Vector3(0,1,0), scene);
-  var gravityVector = new BABYLON.Vector3(0,-9.81, 0);
-  var physicsPlugin = new BABYLON.CannonJSPlugin(true, 10, cannon);
-  scene.enablePhysics(gravityVector, physicsPlugin);
-  var ground = BABYLON.MeshBuilder.CreateGround('ground1', {height:50, width:50, subdivisions: 2}, scene);
-  ground.physicsImpostor = new BABYLON.PhysicsImpostor(ground, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 0, restitution: 0.9 }, scene);
-  return scene;
+export const setupGround = (scene) => {
+  var geometry = new THREE.PlaneGeometry( 100, 100);
+  var material = new THREE.MeshBasicMaterial( {color: 0xffff00, side: THREE.DoubleSide} );
+  var plane = new THREE.Mesh( geometry, material );
+  plane.rotation.x = 90;
+  plane.position.y = -20;
+  scene.add(plane);
 }
 
 export const setupControls = (target) => {
   window.addEventListener('keydown', ({ key }) => {
-    switch (key) {
-      case 'ArrowUp':
-        target.position.z --;
-        break;
-      case 'ArrowDown':
-        target.position.z ++;
-        break;
-      case 'ArrowLeft':
-        target.position.x ++;
-        break;
-      case 'ArrowRight':
-        target.position.x --;
-        break;
-    }
     console.log(key);
-  })
+      switch (key) {
+        case '-':
+          target.position.z --;
+          break;
+        case '=':
+          target.position.z ++;
+          break;
+        case 'w':
+          target.rotation.y --;
+          break;
+        case 's':
+          target.rotation.y ++;
+          break;
+        case 'a':
+          target.rotation.x --;
+          break;
+        case 'd':
+          target.rotation.x ++;
+          break;
+        case 'ArrowUp':
+          target.position.y ++;
+          break;
+        case 'ArrowDown':
+          target.position.y --;
+          break;
+        case 'ArrowLeft':
+          target.position.x --;
+          break;
+        case 'ArrowRight':
+          target.position.x ++;
+          break;
+      }
+      console.log(target);
+    });
 }

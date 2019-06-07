@@ -1,23 +1,22 @@
-import * as BABYLON from 'babylonjs';
-
-import { createCamera, createScene, createSphere, setupControls } from './scene';
+import { addCharacter, setupControls, setupGround, setupScene } from './scene';
 
 window.init = () => {
-  const canvas = document.getElementById('renderCanvas');
-  const engine = new BABYLON.Engine(canvas, true);
-  const scene = createScene(engine);
-  const camera = createCamera(scene);
-  const sphere = createSphere(scene);
-  camera.attachControl(canvas, false);
-  camera.lockedTarget = sphere;
-  setupControls(sphere);
+  const {
+    scene,
+    camera,
+    renderer,
+  } = setupScene();
 
-  engine.runRenderLoop(function() {
-    scene.render();
+  setupGround(scene);
+
+  addCharacter(scene, ({animations, model}) => {
+    setupControls(model);
+    renderer.render(scene, camera);
   });
 
+  function animate() {
+    requestAnimationFrame( animate );
+    renderer.render( scene, camera );
+  }
+  animate();
 }
-
-window.addEventListener('resize', function() {
-  engine.resize();
-});
